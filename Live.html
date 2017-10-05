@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Live</title>
+    <style>
+    	* { padding: 0; margin: 0; }
+    	canvas { background: #eee; display: block; margin: 0 auto; }
+    </style>
+</head>
+<body>
+
+<canvas id="myCanvas" width="800" height="600"></canvas>
+
+<script>
+	//get canvas
+	var canvas = document.getElementById("myCanvas");
+	var ctx = canvas.getContext("2d");
+	var x = canvas.width/2;
+	var y = canvas.height-30;
+	//speed
+	var dx = 2;
+	var dy = -2;
+	var ballRadius = 10;
+	//paddle
+	var paddleHeight = 10;
+	var paddleWidth = 75;
+	var paddleX = (canvas.width-paddleWidth)/2;
+	//key press
+	var rightPressed = false;
+	var leftPressed = false;
+
+	var brickRowCount = 13;
+	var brickColumnCount = 16;
+	var brickWidth = 40;
+	var brickHeight = 40;
+	var brickPadding = 5;
+	var brickOffsetTop = 10;
+	var brickOffsetLeft = 10;
+	//score
+	var score = 0;
+	var lives = 3;
+	var rand = 0;
+	var min = 0;
+	var max = 100;
+
+	var food = 5;
+	var water = 5;
+	var turn = 3;
+	var day = 0;
+
+	var charX = 0;
+	var charY = 0;
+
+	//setting up blocks
+	//randomly simulate items in each block 
+	//status 1 = clear
+	//status 2 = food
+	//status 3 = water
+	var bricks = [];
+	for(c=0; c<brickColumnCount; c++) {
+	    bricks[c] = [];
+	    for(r=0; r<brickRowCount; r++) {
+	    	rand = Math.floor(Math.random() * (max - min + 1)) + min;
+	    	if (rand < 10)
+	        {
+	        	bricks[c][r] = { x: 0, y: 0 , status: 20};
+	        	if (rand < 5)
+	        	bricks[c][r] = { x: 0, y: 0 , status: 21};
+	        	if (rand < 2)
+	        	bricks[c][r] = { x: 0, y: 0 , status: 22};
+
+	        }
+	    	else if (rand > 90)
+	        {
+	        	bricks[c][r] = { x: 0, y: 0 , status: 30};
+	        	if (rand > 95)
+	        	bricks[c][r] = { x: 0, y: 0 , status: 31};
+	        	if (rand > 97)
+	        	bricks[c][r] = { x: 0, y: 0 , status: 32};
+	        }
+	    	else
+	        {
+	        	bricks[c][r] = { x: 0, y: 0 , status: 10};
+	        }
+	    }
+	}
+
+	document.addEventListener("keydown", keyDownHandler, false);
+	document.addEventListener("keyup", keyUpHandler, false);
+	document.addEventListener("mousemove", mouseMoveHandler, false);
+
+
+	function keyDownHandler(e) {
+	    if(e.keyCode == 39) {
+	        rightPressed = true;
+	    }
+	    else if(e.keyCode == 37) {
+	        leftPressed = true;
+	    }
+	}
+
+	function keyUpHandler(e) {
+	    if(e.keyCode == 39) {
+	        rightPressed = false;
+	    }
+	    else if(e.keyCode == 37) {
+	        leftPressed = false;
+	    }
+	}
+
+	function mouseMoveHandler(e) {
+	    var relativeX = e.clientX - canvas.offsetLeft;
+	    if(relativeX > 0 && relativeX < canvas.width) {
+	        paddleX = relativeX - paddleWidth/2;
+	    }
+	}
+
+	function collisionDetection() {
+	    for(c=0; c<brickColumnCount; c++) {
+	        for(r=0; r<brickRowCount; r++) {
+	            var b = bricks[c][r];
+	            if(b.status == 1) {
+	                if(x > b.x && x < b.x+brickWidth && y > b.y && y < b.y+brickHeight) {
+	                    dy = -dy;
+	                    b.status = 0;
+	                    score++;
+	                    if(score == brickRowCount*brickColumnCount) {
+                        alert("YOU WIN, CONGRATULATIONS!");
+                        	document.location.reload();
+                    	}
+	                }
+            }
+		    }
+		}
+	}
+
+	function drawScore() {
+	    ctx.font = "16px Arial";
+	    ctx.fillStyle = "#0095DD";
+	    ctx.fillText("Score: "+score, 8, 20);
+	}
+
+	function drawLives() {
+	    ctx.font = "16px Arial";
+	    ctx.fillStyle = "#0095DD";
+	    ctx.fillText("Food: "+food, canvas.width-65, 20);
+	    ctx.font = "16px Arial";
+	    ctx.fillStyle = "#0095DD";
+	    ctx.fillText("Water: "+water, canvas.width-65, 40);
+	    ctx.font = "16px Arial";
+	    ctx.fillStyle = "#0095DD";
+	    ctx.fillText("Turns: "+turn, canvas.width-65, 60);
+	    ctx.fillStyle = "#0095DD";
+	    ctx.fillText("Days: "+day, canvas.width-65, 80);
+	}
+
+	function drawBricks() {
+		//randomly simulate items in each block 
+		//status 10 = clear
+		//status 10 = clear
+		//status 10 = clear
+
+		//status 20 = s. food
+		//status 21 = m. food
+		//status 22 = l. food
+
+		//status 30 = s. water
+		//status 31 = m. water
+		//status 32 = l. water
+
+	    for(c=0; c<brickColumnCount; c++) {
+	        for(r=0; r<brickRowCount; r++) {    
+		        if(bricks[c][r].status == 10) { 
+		            var brickX = (c*(brickWidth+brickPadding))+brickOffsetLeft;
+		            var brickY = (r*(brickHeight+brickPadding))+brickOffsetTop;
+		            bricks[c][r].x = brickX;
+		            bricks[c][r].y = brickY;
+		            ctx.beginPath();
+		            ctx.rect(brickX, brickY, brickWidth, brickHeight);
+		            ctx.fillStyle = "#0095DD";
+		            ctx.stroke();
+		            ctx.closePath();
+		        } 
+		        else if(bricks[c][r].status == 20) { 
+		            var brickX = (c*(brickWidth+brickPadding))+brickOffsetLeft;
+		            var brickY = (r*(brickHeight+brickPadding))+brickOffsetTop;
+		            bricks[c][r].x = brickX;
+		            bricks[c][r].y = brickY;
+		            ctx.beginPath();
+		            ctx.rect(brickX, brickY, brickWidth, brickHeight);
+		            ctx.fillStyle = "#33cc33";
+		            ctx.fill();
+		            ctx.closePath();
+		        } 
+		        else if(bricks[c][r].status == 21) { 
+		            var brickX = (c*(brickWidth+brickPadding))+brickOffsetLeft;
+		            var brickY = (r*(brickHeight+brickPadding))+brickOffsetTop;
+		            bricks[c][r].x = brickX;
+		            bricks[c][r].y = brickY;
+		            ctx.beginPath();
+		            ctx.rect(brickX, brickY, brickWidth, brickHeight);
+		            ctx.fillStyle = "#339933";
+		            ctx.fill();
+		            ctx.closePath();
+		        } 
+		        else if(bricks[c][r].status == 22) { 
+		            var brickX = (c*(brickWidth+brickPadding))+brickOffsetLeft;
+		            var brickY = (r*(brickHeight+brickPadding))+brickOffsetTop;
+		            bricks[c][r].x = brickX;
+		            bricks[c][r].y = brickY;
+		            ctx.beginPath();
+		            ctx.rect(brickX, brickY, brickWidth, brickHeight);
+		            ctx.fillStyle = "#336633";
+		            ctx.fill();
+		            ctx.closePath();
+		        } 
+		        else if(bricks[c][r].status == 30) { 
+		            var brickX = (c*(brickWidth+brickPadding))+brickOffsetLeft;
+		            var brickY = (r*(brickHeight+brickPadding))+brickOffsetTop;
+		            bricks[c][r].x = brickX;
+		            bricks[c][r].y = brickY;
+		            ctx.beginPath();
+		            ctx.rect(brickX, brickY, brickWidth, brickHeight);
+		            ctx.fillStyle = "#C2F8FF";
+		            ctx.fill();
+		            ctx.closePath();
+		        }
+		        else if(bricks[c][r].status == 31) { 
+		            var brickX = (c*(brickWidth+brickPadding))+brickOffsetLeft;
+		            var brickY = (r*(brickHeight+brickPadding))+brickOffsetTop;
+		            bricks[c][r].x = brickX;
+		            bricks[c][r].y = brickY;
+		            ctx.beginPath();
+		            ctx.rect(brickX, brickY, brickWidth, brickHeight);
+		            ctx.fillStyle = "#8FF2FF";
+		            ctx.fill();
+		            ctx.closePath();
+		        }
+		        else if(bricks[c][r].status == 32) { 
+		            var brickX = (c*(brickWidth+brickPadding))+brickOffsetLeft;
+		            var brickY = (r*(brickHeight+brickPadding))+brickOffsetTop;
+		            bricks[c][r].x = brickX;
+		            bricks[c][r].y = brickY;
+		            ctx.beginPath();
+		            ctx.rect(brickX, brickY, brickWidth, brickHeight);
+		            ctx.fillStyle = "#20E1FA";
+		            ctx.fill();
+		            ctx.closePath();
+		        }
+	        }
+	    }
+
+	}
+
+	function drawChar(){
+		 for(c=0; c<brickColumnCount; c++) {
+			        for(r=0; r<brickRowCount; r++) {    
+				        
+				            var brickX = (c*(brickWidth+brickPadding))+brickOffsetLeft;
+				            var brickY = (r*(brickHeight+brickPadding))+brickOffsetTop;
+				            bricks[c][r].x = brickX;
+				            bricks[c][r].y = brickY;
+				            if(c == charX && r == charY) { 
+				            ctx.beginPath();
+				            ctx.rect(brickX +3 , brickY +3, brickWidth-6, brickHeight-6);
+				            ctx.fillStyle = "#E8B78B";
+				            ctx.fill();
+				            ctx.closePath();
+				        } 
+		}
+	}}
+
+
+	function draw() {
+		//Simulate some sort of random event 
+		//sun burns all resource -1
+		//harsh winds turns -1
+		//growth all food +1
+		//rain all water +1
+		//water hole random 5 water at 1 each
+		//wide growth random 5 food at 1 each
+
+		//The shape does something
+		//user movment 
+
+		//end of turn need water and food
+		//need 1 water 1 food
+		//If any runs out, you are dead 
+
+		//Update the map
+
+
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+    	drawBricks();
+    	drawChar();
+    	//drawBall();
+    	//drawPaddle();
+    	//drawScore();
+    	drawLives();
+    	//collisionDetection();
+    /*
+	    if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) {
+	        dx = -dx;
+	    }
+	    if(y + dy < ballRadius) {
+	        dy = -dy;
+	    }
+	    else if(y + dy > canvas.height-ballRadius) {
+	        if(x > paddleX && x < paddleX + paddleWidth) {
+	            dy = -dy;
+	        }
+	        else {
+	        	lives--;
+				if(!lives) {
+				    alert("GAME OVER");
+				    document.location.reload();
+				}
+				else {
+				    x = canvas.width/2;
+				    y = canvas.height-30;
+				    dx = 2;
+				    dy = -2;
+				    paddleX = (canvas.width-paddleWidth)/2;
+				}
+	        }
+	    }
+	    
+	    if(rightPressed && paddleX < canvas.width-paddleWidth) {
+	        paddleX += 7;
+	    }
+	    else if(leftPressed && paddleX > 0) {
+	        paddleX -= 7;
+	    }
+	    
+	    x += dx;
+	    y += dy;
+*/
+		requestAnimationFrame(draw);
+	}
+
+	function drawBall() {
+	    ctx.beginPath();
+	    ctx.arc(x, y, ballRadius, 0, Math.PI*2);
+	    ctx.fillStyle = "#0095DD";
+	    ctx.fill();
+	    ctx.closePath();
+
+	}
+
+	function drawPaddle() {
+	    ctx.beginPath();
+	    ctx.rect(paddleX, canvas.height-paddleHeight, paddleWidth, paddleHeight);
+	    ctx.fillStyle = "#0095DD";
+	    ctx.fill();
+	    ctx.closePath();
+	}
+
+	//setInterval(draw, 10)
+	draw();
+
+</script>
+
+</body>
+</html>
