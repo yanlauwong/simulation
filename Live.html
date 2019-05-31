@@ -10,7 +10,7 @@
 </head>
 <body>
 
-<canvas id="myCanvas" width="800" height="600"></canvas>
+<canvas id="myCanvas" width="800" height="640"></canvas>
 
 <script>
 	//get canvas
@@ -18,17 +18,12 @@
 	var ctx = canvas.getContext("2d");
 	var x = canvas.width/2;
 	var y = canvas.height-30;
-	//speed
-	var dx = 2;
-	var dy = -2;
-	var ballRadius = 10;
-	//paddle
-	var paddleHeight = 10;
-	var paddleWidth = 75;
-	var paddleX = (canvas.width-paddleWidth)/2;
+
 	//key press
 	var rightPressed = false;
 	var leftPressed = false;
+	var upPressed = false;
+	var downPressed = false;
 
 	var brickRowCount = 13;
 	var brickColumnCount = 16;
@@ -48,6 +43,8 @@
 	var water = 5;
 	var turn = 3;
 	var day = 0;
+	var score = 0;
+	var lastEvent = "Welcome to the dessert";
 
 	var charX = 0;
 	var charY = 0;
@@ -88,8 +85,12 @@
 
 	document.addEventListener("keydown", keyDownHandler, false);
 	document.addEventListener("keyup", keyUpHandler, false);
-	document.addEventListener("mousemove", mouseMoveHandler, false);
 
+	//timeout function
+
+	
+
+	var evtFired = false;
 
 	function keyDownHandler(e) {
 	    if(e.keyCode == 39) {
@@ -98,41 +99,68 @@
 	    else if(e.keyCode == 37) {
 	        leftPressed = true;
 	    }
+	    else if(e.keyCode == 38) {
+	        upPressed = true;
+	    }
+	    else if(e.keyCode == 40) {
+	        downPressed = true;
+	    }
+		document.removeEventListener("keydown", keyDownHandler, false);
 	}
 
 	function keyUpHandler(e) {
+		evtFired = true;
 	    if(e.keyCode == 39) {
 	        rightPressed = false;
 	    }
 	    else if(e.keyCode == 37) {
 	        leftPressed = false;
 	    }
-	}
-
-	function mouseMoveHandler(e) {
-	    var relativeX = e.clientX - canvas.offsetLeft;
-	    if(relativeX > 0 && relativeX < canvas.width) {
-	        paddleX = relativeX - paddleWidth/2;
+	    else if(e.keyCode == 38) {
+	        upPressed = false;
+	    }
+	    else if(e.keyCode == 40) {
+	        downPressed = false;
 	    }
 	}
 
+
 	function collisionDetection() {
-	    for(c=0; c<brickColumnCount; c++) {
-	        for(r=0; r<brickRowCount; r++) {
-	            var b = bricks[c][r];
-	            if(b.status == 1) {
-	                if(x > b.x && x < b.x+brickWidth && y > b.y && y < b.y+brickHeight) {
-	                    dy = -dy;
-	                    b.status = 0;
-	                    score++;
-	                    if(score == brickRowCount*brickColumnCount) {
-                        alert("YOU WIN, CONGRATULATIONS!");
-                        	document.location.reload();
-                    	}
-	                }
-            }
-		    }
+		turn -= 1;
+		switch (bricks[charX][charY].status){
+			case 10:
+			break;
+			case 20:
+				food += 1;
+				bricks[charX][charY].status = 10;
+			break;
+			case 21:
+				food += 1;
+				bricks[charX][charY].status = 20;
+			break;
+			case 22:
+				food += 1;
+				bricks[charX][charY].status = 21;
+			break;
+			case 30:
+				water += 1;
+				bricks[charX][charY].status = 10;
+			break;
+			case 31:
+				water += 1;
+				bricks[charX][charY].status = 30;
+			break;
+			case 32:
+				water += 1;
+				bricks[charX][charY].status = 31;
+			break;
 		}
+		if (turn == 0){
+			day += 1;
+			turn = 3;
+			simulateEvent();
+		}
+
 	}
 
 	function drawScore() {
@@ -144,15 +172,23 @@
 	function drawLives() {
 	    ctx.font = "16px Arial";
 	    ctx.fillStyle = "#0095DD";
-	    ctx.fillText("Food: "+food, canvas.width-65, 20);
+	    ctx.fillText("Food: "+food, canvas.width-780, 610);
 	    ctx.font = "16px Arial";
 	    ctx.fillStyle = "#0095DD";
-	    ctx.fillText("Water: "+water, canvas.width-65, 40);
+	    ctx.fillText("Water: "+water, canvas.width-680, 610);
 	    ctx.font = "16px Arial";
 	    ctx.fillStyle = "#0095DD";
-	    ctx.fillText("Turns: "+turn, canvas.width-65, 60);
+	    ctx.fillText("Turns: "+turn, canvas.width-580, 610);
 	    ctx.fillStyle = "#0095DD";
-	    ctx.fillText("Days: "+day, canvas.width-65, 80);
+	    ctx.fillText("Days: "+day, canvas.width-480, 610);
+	    
+	    ctx.fillStyle = "#0095DD";
+	    ctx.fillText("Score: "+score, canvas.width-200, 610);
+
+
+	    ctx.fillStyle = "#0095DD";
+	    ctx.fillText(lastEvent, canvas.width-780, 630);
+
 	}
 
 	function drawBricks() {
@@ -271,22 +307,227 @@
 		}
 	}}
 
+	function updateResource(resource, effect){
+
+	}
+
+	function simulateEvent(){
+		var godOfWeather=Math.floor(Math.random() * 8);
+		var godOfDessert=Math.floor(Math.random() * 7);
+		lastEvent = "End of the day...";
+		//Weather events 
+		//good events
+			//rain all water +1
+			//Great weather +1 turn
+			//Date mix up +1 day
+		//netural events
+			//earth quake all wate rbecomes food and all food becomes water
+			//randomly moving 5 water around
+		//bad events
+			//sun burns all resource -1
+			//harsh winds turns -1
+			//day ja vu... -1 day
+			switch (godOfWeather){
+				case 0:
+					lastEvent = " Heavy rain...";
+					for(c=0; c<brickColumnCount; c++) {
+	        			for(r=0; r<brickRowCount; r++) {    
+	        				switch (bricks[c][r].status){
+	        					case 30:
+	        						bricks[c][r].status = 31;
+	        					break;
+	        					case 31:
+	        						bricks[c][r].status = 32;
+	        					break;
+	        				}
+	        			}
+	   		 		}
+				break;
+				case 1:
+					lastEvent = " Great weather lets push on...";
+					turn += 1;
+				break;
+				case 2:
+					lastEvent = " Today is tomorrow...";
+					day += 1;
+				break;
+				case 3:
+					lastEvent = " Earthquake...";
+					for(c=0; c<brickColumnCount; c++) {
+	        			for(r=0; r<brickRowCount; r++) {    
+	        				switch (bricks[c][r].status){
+	        					case 20:
+	        						bricks[c][r].status = 30;
+	        					break;
+	        					case 21:
+	        						bricks[c][r].status = 31;
+	        					break;
+	        					case 22: 
+	        						bricks[c][r].status = 32;
+	        					break;
+	        					case 30:
+	        						bricks[c][r].status = 20;
+	        					break;
+	        					case 31:
+	        						bricks[c][r].status = 21;
+	        					break;
+	        					case 32:
+	        						bricks[c][r].status = 22;
+	        					break;
+	        				}
+	        			}
+	   		 		}
+
+
+				break;
+				case 4:
+					lastEvent = " Oh god of weather...";
+				break;
+				case 5:
+					lastEvent = " Sun beats down...";
+					water -= 1;
+					food -= 1;
+				break;
+				case 6:
+					lastEvent = " Heavy winds, can't move...";
+					turn -= 1;
+				break;
+				case 7:
+					lastEvent = " Deja vu...";
+					day -= 1;
+				break;
+			}
+			
+
+		//Dessert events
+		//good events
+			//growth all food +1
+			//water hole random 5 water at 1 each
+			//wide growth random 5 food at 1 each
+		//netural events
+			//wild camel takes you somewhere else
+			//randomly moving 5 food around
+		//bad events
+			//animals attack lose half your food to lure them away
+			//sandstorm all resource -1
+			//bottle leaked lose half water
+
+			switch (godOfDessert){
+				case 0:
+					lastEvent += " All food grows";
+					for(c=0; c<brickColumnCount; c++) {
+	        			for(r=0; r<brickRowCount; r++) {    
+	        				switch (bricks[c][r].status){
+	        					case 20:
+	        						bricks[c][r].status = 21;
+	        					break;
+	        					case 21:
+	        						bricks[c][r].status = 22;
+	        					break;
+	        				}
+	        			}
+	   		 		}
+				break;
+				case 1:
+					lastEvent += " Water is spurting";
+					for (i=0;i<5;i++){
+						var tmp = true;
+						while (tmp){
+							var x = Math.floor(Math.random() * brickColumnCount);
+							var y = Math.floor(Math.random() * brickRowCount);
+							if (bricks[x][y].status == 10){
+								bricks[x][y].status = 30;
+								tmp = false;
+							}
+						}
+					}
+				break;
+				case 2:
+					lastEvent += " Food grows";
+					for (i=0;i<5;i++){
+						var tmp = true;
+						while (tmp){
+							var x = Math.floor(Math.random() * brickColumnCount);
+							var y = Math.floor(Math.random() * brickRowCount);
+							if (bricks[x][y].status == 10){
+								bricks[x][y].status = 20;
+								tmp = false;
+							}
+						}
+					}
+				break;
+				case 3:
+					lastEvent += " Go for a ride on a camel";
+					
+					charX = Math.floor(Math.random() * brickColumnCount);
+					charY = Math.floor(Math.random() * brickRowCount);
+					
+				break;
+				case 4:
+					lastEvent += " Animals attack";
+					food = Math.round(food/2);
+				break;
+				case 5:
+					lastEvent += " Sandstorm";
+					for(c=0; c<brickColumnCount; c++) {
+	        			for(r=0; r<brickRowCount; r++) {    
+	        				switch (bricks[c][r].status){
+	        					case 20:
+	        						bricks[c][r].status = 10;
+	        					break;
+	        					case 21:
+	        						bricks[c][r].status = 20;
+	        					break;
+	        					case 22: 
+	        						bricks[c][r].status = 21;
+	        					break;
+	        					case 30:
+	        						bricks[c][r].status = 10;
+	        					break;
+	        					case 31:
+	        						bricks[c][r].status = 30;
+	        					break;
+	        					case 32:
+	        						bricks[c][r].status = 31;
+	        					break;
+	        				}
+	        			}
+	   		 		}
+				break;
+				case 6:
+					lastEvent += " Bottle leak...";
+					food = Math.round(water/2);
+				break;
+
+				//animals attack lose half your food to lure them away
+				//sandstorm all resource -1
+				//bottle leaked lose half water
+			}
+
+
+		water -= 1;
+		food -=1;
+		if (water < 0 && food < 0)
+		{ 
+			alert ("The gods have forsaken you");
+			location.reload(); 
+		}
+
+		if (water < 0)
+		{ 
+			alert ("You died of thrist ");
+			location.reload(); 
+		}
+
+		if (food <0)
+		{ 
+			alert ("You died of hungry ");
+			location.reload(); 
+		}
+	}	
 
 	function draw() {
-		//Simulate some sort of random event 
-		//sun burns all resource -1
-		//harsh winds turns -1
-		//growth all food +1
-		//rain all water +1
-		//water hole random 5 water at 1 each
-		//wide growth random 5 food at 1 each
-
-		//The shape does something
-		//user movment 
-
-		//end of turn need water and food
-		//need 1 water 1 food
-		//If any runs out, you are dead 
+		
 
 		//Update the map
 
@@ -294,68 +535,36 @@
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
     	drawBricks();
     	drawChar();
-    	//drawBall();
-    	//drawPaddle();
-    	//drawScore();
     	drawLives();
-    	//collisionDetection();
-    /*
-	    if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) {
-	        dx = -dx;
+
+		//button pressing
+		if(rightPressed && charX < 15){
+			rightPressed = false;
+	       	charX += 1;
+	       	collisionDetection();
 	    }
-	    if(y + dy < ballRadius) {
-	        dy = -dy;
+	    else if(leftPressed && charX > 0) {
+	    	leftPressed = false;
+	        charX -= 1;
+	       	collisionDetection();
 	    }
-	    else if(y + dy > canvas.height-ballRadius) {
-	        if(x > paddleX && x < paddleX + paddleWidth) {
-	            dy = -dy;
-	        }
-	        else {
-	        	lives--;
-				if(!lives) {
-				    alert("GAME OVER");
-				    document.location.reload();
-				}
-				else {
-				    x = canvas.width/2;
-				    y = canvas.height-30;
-				    dx = 2;
-				    dy = -2;
-				    paddleX = (canvas.width-paddleWidth)/2;
-				}
-	        }
+	    if(downPressed && charY <12) {
+	    	downPressed = false;
+	        charY += 1;
+	       	collisionDetection();
 	    }
-	    
-	    if(rightPressed && paddleX < canvas.width-paddleWidth) {
-	        paddleX += 7;
+	    else if(upPressed && charY >0) {
+	    	upPressed = false;
+	        charY -= 1;
+	       	collisionDetection();
 	    }
-	    else if(leftPressed && paddleX > 0) {
-	        paddleX -= 7;
-	    }
-	    
-	    x += dx;
-	    y += dy;
-*/
+	    setTimeout(function() {
+		    document.addEventListener("keydown", keyDownHandler, false);
+		}, 1000);
+		if (score < Math.round((food+water)*(day*0.2)))
+		score = Math.round((food+water)*(day*0.2));
 		requestAnimationFrame(draw);
 	}
-
-	function drawBall() {
-	    ctx.beginPath();
-	    ctx.arc(x, y, ballRadius, 0, Math.PI*2);
-	    ctx.fillStyle = "#0095DD";
-	    ctx.fill();
-	    ctx.closePath();
-
-	}
-
-	function drawPaddle() {
-	    ctx.beginPath();
-	    ctx.rect(paddleX, canvas.height-paddleHeight, paddleWidth, paddleHeight);
-	    ctx.fillStyle = "#0095DD";
-	    ctx.fill();
-	    ctx.closePath();
-	}
-
 	//setInterval(draw, 10)
 	draw();
 
